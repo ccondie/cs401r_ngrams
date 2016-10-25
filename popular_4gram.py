@@ -29,7 +29,8 @@ if __name__ == '__main__':
 
     # # map to 3-tuples of (ngram, year, count)
     LOGGER.info('***** SPLITTING LZO INPUT')
-    allEntries = lzoRDD.map(lambda x: x.split())
+    # allEntries = lzoRDD.map(lambda x: x.split())
+    allEntries = lzoRDD.map(lambda x: re.split(r'\t+',x))
 
     LOGGER.info('***** GENERATING 3-TUPLES')
     # 1gram: x[0]:word - x[1]:year - x[2]:count - x[3]:pages - x[4]:books
