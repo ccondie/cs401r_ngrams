@@ -35,7 +35,8 @@ if __name__ == '__main__':
     LOGGER.info('***** GENERATING 3-TUPLES')
     # 1gram: x[0]:word - x[1]:year - x[2]:count - x[3]:pages - x[4]:books
     # 4gram: x[0]:word1 - x[1]:word2 - x[2]:word3 - x[3]:word4 - x[4]:year - x[5]:count - x[6]:pages - x[7]:books
-    formattedEntries = allEntries.map(lambda x: (str(x[0] + ' ' + x[1] + ' ' + x[2] + ' ' + x[3]), x[4], x[5]))
+    # 4gram: x[0]:4gram - x[1]:year - x[2]:occurrences
+    formattedEntries = allEntries.map(lambda x: (x[0], x[1], x[2]))
     # formattedEntries - "word word word word", 1905, 54
     # formattedEntries = allEntries.map(lambda x: x[1])
 
