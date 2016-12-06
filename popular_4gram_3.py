@@ -17,7 +17,7 @@ def filter_year(ngram):
 
 def take_highest(ngrams):
     final_iterator = []
-    count = 10
+    count = 3
     for el in ngrams:
         if count == 0:
             break
@@ -29,7 +29,7 @@ def take_highest(ngrams):
 def sort_and_crop(ngrams):
     final_iterator = []
 
-    middle = sorted(ngrams, key=lambda x: x[0])
+    middle = sorted(ngrams, key=lambda x: -int(x[0]))
 
     count = 10
     for el in middle:
@@ -43,8 +43,7 @@ def sort_and_crop(ngrams):
 if __name__ == '__main__':
     # collect input parameters
     inputPath = sys.argv[1]
-    year_to_search = sys.argv[2]
-    outputFile = sys.argv[3]
+    outputFile = sys.argv[2]
 
     # start SparkContext
     conf = SparkConf().setAppName('popular_4gram')
@@ -59,10 +58,11 @@ if __name__ == '__main__':
     # LZO indexed by row i.e. <1:ngram data, 2: ngram data, 3: ngram data>
     files = sc.sequenceFile(inputPath, "org.apache.hadoop.io.LongWritable", "org.apache.hadoop.io.Text")
     lzoRDD = files.map(lambda x: x[1])
-
     LOGGER.info('***** SPLITTING LZO INPUT')
     allEntries = lzoRDD.map(lambda x: re.split(r'\t+', x))
 
+    # # read input
+    # LOGGER.info('***** READING TEXT FILE')
     # files = sc.textFile(inputPath)
     # # map to 3-tuples of (ngram, year, count)
     # LOGGER.info('***** SPLITTING LZO INPUT')
@@ -75,15 +75,18 @@ if __name__ == '__main__':
     # filteredEntries = formattedEntries.filter(lambda x: x[2] == year_to_search)
     filteredEntries = formattedEntries.filter(filter_year)
 
-    LOGGER.info('***** SORT BY OCCURRENCES')
-    sortedEntries = filteredEntries.sortBy(lambda x: -int(x[0]))
+    # LOGGER.info('***** SORT BY OCCURRENCES')
+    # sortedEntries = filteredEntries.sortBy(lambda x: -int(x[0]))
+    #
+    # LOGGER.info('***** MAP PARTITIONS')
+    # highest = sortedEntries.mapPartitions(take_highest)
 
-    LOGGER.info('***** MAP PARTITIONS')
-    highest = sortedEntries.mapPartitions(take_highest)
+    cropped = filteredEntries.mapPartitions(sort_and_crop)
+    cropped_sorted = cropped.sortBy(lambda x: -int(x[0]))
 
     LOGGER.info('***** COLLECT AND WRITE')
-    highest.collect()
-    highest.saveAsTextFile(outputFile)
+    cropped_sorted.collect()
+    cropped_sorted.saveAsTextFile(outputFile)
 
     # sortedEntries.collect()
     # sortedEntries.saveAsTextFile(outputFile)
